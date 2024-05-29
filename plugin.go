@@ -109,10 +109,9 @@ func renderTemplate(tmpl string, vars map[string]string) (string, error) {
 func (p Plugin) Exec() error {
 	envVars := getEnvVariables()
 
-	renderedContent, err := renderTemplate(config.Content, envVars)
+	renderedContent, err := renderTemplate(p.Config.Content, envVars)
 	if err != nil {
-			fmt.Println("Error rendering template:", err)
-			return
+		return errors.New(fmt.Sprintf("Error rendering template: %v", err))
 	}
 
 	url := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + p.Config.Key
