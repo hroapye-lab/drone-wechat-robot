@@ -25,7 +25,7 @@ steps:
   settings:
     msgtype: text
     key: your own robot key
-    content: hello world
+    content: "Build status: {{ .CI_BUILD_STATUS }}, Commit: {{ .DRONE_COMMIT }}"
     mentioned_list: @all,kaynewang
     mentioned_mobile_list: @all,kaynewang
 ```
@@ -41,8 +41,5 @@ steps:
   settings:
     msgtype: markdown
     key: your own robot key
-    content: "实时新增用户反馈<font color=\"warning\">132例</font>，请相关同事注意。\n
-         >类型:<font color=\"comment\">用户反馈</font>
-         >普通用户反馈:<font color=\"comment\">117例</font>
-         >VIP用户反馈:<font color=\"comment\">15例</font>"
+    content: "**Build status**: {{ .CI_BUILD_STATUS }}, **Commit**: {{ .DRONE_COMMIT }}"
 ```

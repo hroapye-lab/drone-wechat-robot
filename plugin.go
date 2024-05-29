@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"text/template"
+	"strings"
 )
 
 type (
@@ -78,7 +81,40 @@ type (
 	}
 )
 
+func getEnvVariables() map[string]string {
+	vars := make(map[string]string)
+	for _, env := range os.Environ() {
+			pair := strings.SplitN(env, "=", 2)
+			if strings.HasPrefix(pair[0], "CI_") || strings.HasPrefix(pair[0], "DRONE_") {
+					vars[pair[0]] = pair[1]
+			}
+	}
+	return vars
+}
+
+func renderTemplate(tmpl string, vars map[string]string) (string, error) {
+	t, err := template.New("content").Parse(tmpl)
+	if err != nil {
+			return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, vars); err != nil {
+			return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (p Plugin) Exec() error {
+	envVars := getEnvVariables()
+
+	renderedContent, err := renderTemplate(config.Content, envVars)
+	if err != nil {
+			fmt.Println("Error rendering template:", err)
+			return
+	}
+
 	url := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + p.Config.Key
 
 	var data interface{}
@@ -86,7 +122,7 @@ func (p Plugin) Exec() error {
 	switch p.Config.MsgType {
 	case "text":
 		text := TextContent{
-			Content:             p.Config.Content,
+			Content:             renderedContent,
 			MentionedList:       p.Config.MentionedList,
 			MentionedMobileList: p.Config.MentionedMobileList,
 		}
@@ -98,7 +134,7 @@ func (p Plugin) Exec() error {
 
 	case "markdown":
 		markdown := MarkdownContent{
-			Content: p.Config.Content,
+			Content: renderedContent,
 		}
 		data = struct {
 			MsgType  string          `json:"msgtype"`
